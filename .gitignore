@@ -1,0 +1,37 @@
+## --- Build & Output Directories ---
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+## --- .NET / C# Temp Files ---
+*.user
+*.userosscache
+*.sln.docstates
+*.suo
+*.userprefs
+*.gpState
+*.idb
+*.pdb
+*.cache
+*.exe
+*.dll
+
+## --- Visual Studio & IDE Tooling ---
+.vs/
+.vscode/
+.idea/
+*.swp
+*~
+*.bak
+
+## --- Environment & Sensitive Settings ---
+# Ignores local connection strings or private keys in dev settings
+appsettings.Development.json
+appsettings.Local.json
+*.env
+
+## --- Operating System Files ---
+.DS_Store
+Thumbs.db
+desktop.ini
