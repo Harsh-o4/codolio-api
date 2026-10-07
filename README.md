@@ -2,16 +2,30 @@
 
 A lightweight ASP.NET Core Web API that retrieves and normalizes developer profile information from [Codolio](https://codolio.com). It combines profile details, social links, coding-platform statistics, GitHub activity, and project information into a consistent JSON response.
 
+## Project Structure
+
+```text
+.
+├── Controllers/
+│   └── ProfileController.cs   # HTTP endpoints and request validation
+├── Services/
+│   ├── IScraperService.cs     # Scraper service contract
+│   └── ScraperService.cs      # Codolio requests, parsing, and aggregation
+├── models/
+│   └── Profile.cs              # Profile, platform, project, and API response models
+├── Program.cs                 # Dependency injection, CORS, Swagger, and app startup
+├── appsettings.json           # Application configuration
+├── test.http                  # Example HTTP requests
+└── codolio_scraper.csproj     # .NET project and package references
+```
+
 ## Features
 
 - Fetch a Codolio profile by username.
 - Fetch a profile using its full Codolio URL.
 - Retrieve the raw Codolio profile HTML for debugging or inspection.
-- Collect profile metadata such as display name, bio, location, organization, and avatar.
 - Collect coding-platform statistics, including solved problems, difficulty breakdowns, ratings, ranks, and handles.
 - Include social links and project details when available.
-- Provide interactive Swagger/OpenAPI documentation at the application root.
-- Return a consistent response envelope containing `success`, `message`, `data`, and `timestamp`.
 
 ## Technology Stack
 
@@ -183,71 +197,6 @@ The profile endpoints return a response envelope similar to the following:
 }
 ```
 
-Some fields are optional and may be `null`, empty, or omitted from the upstream Codolio data.
-
-### Profile fields
-
-| Field | Description |
-| --- | --- |
-| `username` | Codolio profile handle. |
-| `profileUrl` | Normalized Codolio profile URL. |
-| `displayName` | Display name found on the profile. |
-| `avatarUrl` | Profile image URL, when available. |
-| `bio` | Profile biography. |
-| `location` | Country or location information. |
-| `org` | College, university, or organization. |
-| `totalProblemsSolved` | Combined solved-problem count from available platforms. |
-| `activeStreak` | GitHub activity value returned by the Codolio GitHub service. |
-| `maxStreak` | GitHub activity value returned by the Codolio GitHub service. |
-| `links` | Social and coding-platform profile links. |
-| `platforms` | Detailed statistics for connected coding platforms. |
-| `projects` | Projects listed on the Codolio profile. |
-| `scrapedAt` | UTC time when the profile was collected. |
-
-### Platform fields
-
-Each item in `platforms` can contain:
-
-- Platform name and username.
-- Profile URL, when available.
-- Total solved problems.
-- Easy, medium, and hard solved counts.
-- Current and maximum ratings.
-- Rank title and star count, when available.
-
-## How the API Works
-
-The API performs live scraping and does not use a server-side cache.
-
-1. **Receive the request**
-   - The controller accepts either a username or a full Codolio profile URL.
-   - Usernames are trimmed and an optional leading `@` is removed.
-
-2. **Build and validate the Codolio URL**
-   - Username requests are converted to `https://codolio.com/profile/{username}`.
-   - URL requests must use HTTPS and the `codolio.com/profile/{username}` path format.
-
-3. **Fetch the public profile page**
-   - The service requests the Codolio HTML page with a browser-like `User-Agent`, `Referer`, and `Accept` headers.
-   - HTML metadata such as the page title, description, avatar, and social links is extracted with Html Agility Pack.
-
-4. **Fetch structured profile data**
-   - The service requests Codolio's profile service using the username.
-   - It parses profile information, social accounts, connected coding platforms, ratings, and solved-problem counts.
-
-5. **Fetch GitHub statistics**
-   - The service requests the Codolio GitHub profile service.
-   - GitHub-related activity values and a GitHub profile link are added when available.
-
-6. **Combine the results**
-   - Data from the HTML page and upstream services is merged into the `Profile` model.
-   - The API returns the normalized profile inside an `ApiResponse<Profile>` envelope.
-
-7. **Handle unavailable profiles**
-   - If no meaningful profile information is found, the API returns a failure response indicating that the profile was not found or may be private.
-
-Because requests are live, response time and returned data depend on the availability and current structure of Codolio's public pages and services.
-
 ## HTTP Status Codes and Errors
 
 ### Successful response
@@ -282,31 +231,3 @@ From Swagger UI, select an endpoint, enter a username or URL, and choose **Execu
 
 The repository also includes sample requests in [`test.http`](./test.http), which can be run from editors such as Visual Studio or JetBrains Rider.
 
-## Project Structure
-
-```text
-.
-├── Controllers/
-│   └── ProfileController.cs   # HTTP endpoints and request validation
-├── Services/
-│   ├── IScraperService.cs     # Scraper service contract
-│   └── ScraperService.cs      # Codolio requests, parsing, and aggregation
-├── models/
-│   └── Profile.cs              # Profile, platform, project, and API response models
-├── Program.cs                 # Dependency injection, CORS, Swagger, and app startup
-├── appsettings.json           # Application configuration
-├── test.http                  # Example HTTP requests
-└── codolio_scraper.csproj     # .NET project and package references
-```
-
-## Important Notes
-
-- Profile data is fetched live for each request; there is currently no caching layer.
-- The API depends on Codolio's public HTML and upstream service responses. Changes to those services or page structures may require parser updates.
-- The configured HTTP client timeout is 25 seconds.
-- CORS is currently configured to allow requests from any origin. Review this setting before deploying publicly.
-- Use the API responsibly and respect Codolio's terms, robots policies, and service limits.
-
-## License
-
-No license has been specified for this repository yet. Add a license file if you plan to distribute or reuse the project publicly.
