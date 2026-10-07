@@ -1,23 +1,23 @@
 @CodolioApi_HostAddress = http://localhost:5004
 
 ### Get Codolio Profile by Username
-GET {{CodolioApi_HostAddress}}/api/CodolioProfile/profile/H
+GET {{CodolioApi_HostAddress}}/api/Profile/profile/H
 Accept: application/json
 
 ###
 
 ### Get Codolio Profile with Cache Bypass
-GET {{CodolioApi_HostAddress}}/api/CodolioProfile/profile/harsh?bypassCache=true
+GET {{CodolioApi_HostAddress}}/api/Profile/profile/harsh
 Accept: application/json
 
 ###
 
 ### Get Profile by Full Codolio URL
-GET {{CodolioApi_HostAddress}}/api/CodolioProfile/profile-by-url?url=https://codolio.com/profile/H
+GET {{CodolioApi_HostAddress}}/api/Profile/profile-by-url?url=https%3A%2F%2Fcodolio.com%2Fprofile%2FH
 Accept: application/json
 
 ###
 
 ### Get Raw Profile HTML for Debugging
-GET {{CodolioApi_HostAddress}}/api/CodolioProfile/raw-html/harsh
+GET {{CodolioApi_HostAddress}}/api/Profile/raw-html/harsh
 Accept: text/html

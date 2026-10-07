@@ -34,7 +34,7 @@ app.UseSwaggerUI(c =>
     c.RoutePrefix = String.Empty;
 });
 
-app.UseCors();
+app.UseCors("AllowAll");
 app.UseAuthorization();
 app.MapControllers();
 

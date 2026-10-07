@@ -3,7 +3,6 @@ using System.Text.RegularExpressions;
 using Codolio.Models;
 using HtmlAgilityPack;
 using Codolio.Services;
-using Microsoft.AspNetCore.Identity;
 
 namespace Codolio.Services
 {
@@ -47,12 +46,33 @@ namespace Codolio.Services
                 return ApiResponse<Profile>.Fail("Invalid Profile URL.");
             }   
 
-            string username = uri.Segments.LastOrDefault()?.Trim('/') ?? "unknown";
-            return await PerformLiveScraping(username,profileUrl);
+            if (uri.Scheme != Uri.UriSchemeHttps ||
+                !uri.Host.Equals("codolio.com", StringComparison.OrdinalIgnoreCase) &&
+                !uri.Host.Equals("www.codolio.com", StringComparison.OrdinalIgnoreCase))
+            {
+                return ApiResponse<Profile>.Fail("Profile URL must be an HTTPS Codolio profile URL.");
+            }
+
+            var segments = uri.AbsolutePath.Split('/', StringSplitOptions.RemoveEmptyEntries);
+            if (segments.Length != 2 ||
+                !segments[0].Equals("profile", StringComparison.OrdinalIgnoreCase) ||
+                string.IsNullOrWhiteSpace(segments[1]))
+            {
+                return ApiResponse<Profile>.Fail("Profile URL must use the format https://codolio.com/profile/{username}.");
+            }
+
+            string username = Uri.UnescapeDataString(segments[1]);
+            string normalizedUrl = $"https://codolio.com/profile/{Uri.EscapeDataString(username)}";
+            return await PerformLiveScraping(username, normalizedUrl);
         }
 
         public async Task<string?> GetRawHtml(string username)
         {
+            if (string.IsNullOrWhiteSpace(username))
+            {
+                return null;
+            }
+
             try
             {
                 string url = $"https://codolio.com/profile/{username.Trim().TrimStart('@')}";
@@ -120,7 +140,7 @@ namespace Codolio.Services
                 }
                 catch (Exception e)
                 {
-                    _logger.LogWarning("Unable to fetech profile microservice payload for {Username}",username);
+                    _logger.LogWarning(e, "Unable to fetch profile microservice payload for {Username}",username);
                 }
 
 
@@ -137,7 +157,7 @@ namespace Codolio.Services
                 }
                 catch (Exception e)
                 {
-                    _logger.LogWarning("Unable to fetch github stats for {Username}",username);
+                    _logger.LogWarning(e, "Unable to fetch github stats for {Username}",username);
                 }
 
                 //check if profile is invalid or private
@@ -230,7 +250,10 @@ namespace Codolio.Services
                     {
                         foreach (var soc in socialsList.EnumerateArray())
                         {
-                            if (soc.TryGetProperty("socialMediaPlatform", out var plat) && soc.TryGetProperty("handle", out var handle))
+                            if (soc.TryGetProperty("socialMediaPlatform", out var plat) &&
+                                plat.ValueKind == JsonValueKind.String &&
+                                soc.TryGetProperty("handle", out var handle) &&
+                                handle.ValueKind == JsonValueKind.String)
                             {
                                 string pName = plat.GetString() ?? "";
                                 string hVal = handle.GetString() ?? "";
@@ -371,4 +394,3 @@ namespace Codolio.Services
         }
     }
 }
-

@@ -79,7 +79,7 @@ namespace Codolio.Models
             {
                 Success = true,
                 Message = message,
-                Data = default
+                Data = data
             };
         }
 
